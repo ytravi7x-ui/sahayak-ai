@@ -13,13 +13,11 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json());
-
-// Static HTML frontend files serve karne ke liye
 app.use(express.static(__dirname));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-const SYSTEM_INSTRUCTION = `You are Sahayak, an intelligent and helpful AI browser assistant. You can communicate fluently in English, Hindi, and Hinglish based on the user's preference or prompt language. Your goal is to help users summarize webpages, explain key takeaways, translate text, and answer browsing queries accurately and politely.`;
+const SYSTEM_INSTRUCTION = `You are Sahayak, an intelligent and helpful AI browser assistant. You can communicate fluently in English, Hindi, and Hinglish based on the user's preference or prompt language.`;
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -32,11 +30,14 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Updated Gemini Model Configuration
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-1.5-flash',
-            systemInstruction: SYSTEM_INSTRUCTION
-        });
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({ error: 'GEMINI_API_KEY is not configured.' });
+        }
+
+        // Automatic Fallback Models Array
+        const candidateModels = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-1.5-flash', 'gemini-pro'];
+        let replyText = null;
+        let lastError = null;
 
         const contents = [];
         if (history && Array.isArray(history)) {
@@ -49,11 +50,27 @@ app.post('/api/chat', async (req, res) => {
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        const result = await model.generateContent({ contents });
-        const response = await result.response;
-        const replyText = response.text() || "I'm sorry, I couldn't generate a response.";
+        for (const modelName of candidateModels) {
+            try {
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction: SYSTEM_INSTRUCTION
+                });
+                const result = await model.generateContent({ contents });
+                const response = await result.response;
+                replyText = response.text();
+                if (replyText) break;
+            } catch (err) {
+                console.warn(`Model ${modelName} failed, trying next...`, err.message);
+                lastError = err;
+            }
+        }
 
-        res.json({ reply: replyText });
+        if (replyText) {
+            return res.json({ reply: replyText });
+        } else {
+            throw lastError || new Error('All model fallbacks failed.');
+        }
 
     } catch (error) {
         console.error('Gemini API Error:', error);
@@ -65,4 +82,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Sahayak backend running on port ${PORT}`);
 });
-            
+        
