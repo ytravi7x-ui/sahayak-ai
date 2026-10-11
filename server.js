@@ -34,7 +34,7 @@ app.post('/api/chat', async (req, res) => {
             return res.status(500).json({ error: 'GEMINI_API_KEY is not configured.' });
         }
 
-        // Automatic Fallback Models Array
+        // Automatic Fallback Models
         const candidateModels = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-1.5-flash', 'gemini-pro'];
         let replyText = null;
         let lastError = null;
@@ -82,4 +82,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Sahayak backend running on port ${PORT}`);
 });
-        
+                
