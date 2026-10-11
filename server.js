@@ -32,9 +32,9 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Correct Gemini model configuration
+        // Updated Gemini Model Configuration
         const model = genAI.getGenerativeModel({ 
-            model: 'gemini-pro',
+            model: 'gemini-1.5-flash',
             systemInstruction: SYSTEM_INSTRUCTION
         });
 
@@ -65,4 +65,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Sahayak backend running on port ${PORT}`);
 });
-         
+            
