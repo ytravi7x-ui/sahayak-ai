@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SAHAYAK - AI Browser Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090d16',
+                        cardBg: '#121826',
+                        cardBorder: '#1e293b',
+                        accentBlue: '#3b82f6',
+                        accentCyan: '#06b6d4',
+                        accentViolet: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f8fafc;
+            overscroll-behavior-y: none;
+        }
+        /* Custom scrollbar for chat area */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .glow-effect {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col justify-between overflow-hidden bg-darkBg text-slate-100">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-cardBg/80 backdrop-blur-md border-b border-cardBorder z-20 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-robot text-white text-lg"></i>
+                <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-cardBg rounded-full"></span>
+            </div>
+            <div>
+                <div class="flex items-center space-x-1.5">
+                    <h1 class="font-bold text-base tracking-wide bg-gradient-to-r from-white via-slate-200 to-cyan-300 bg-clip-text text-transparent">SAHAYAK</h1>
+                    <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">AI Live</span>
+                </div>
+                <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Connected to Gemini
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="quickHelpBtn" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 transition active:scale-95" title="Quick Commands">
+                <i class="fa-solid fa-bolt text-amber-400 text-sm"></i>
+            </button>
+            <button id="settingsBtn" class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 text-slate-300 transition active:scale-95" title="Settings">
+                <i class="fa-solid fa-gear text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Chat Area -->
+    <main id="chatContainer" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 relative scroll-smooth">
+        <!-- Welcome Banner / Context Card -->
+        <div class="bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-indigo-950/30 border border-blue-500/20 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
+            <div class="flex items-start space-x-3">
+                <div class="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 text-cyan-400 shrink-0">
+                    <i class="fa-solid fa-compass text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-200">Welcome to Sahayak Browser Assistant</h2>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">I am your intelligent companion for web browsing. Ask me in English, Hindi, or Hinglish.</p>
+                </div>
+            </div>
+            <!-- Quick Chips -->
+            <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-800/80">
+                <button class="quick-chip text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center space-x-1.5 active:scale-95" data-prompt="Summarize this webpage">
+                    <i class="fa-solid fa-file-lines text-cyan-400"></i>
+                    <span>Summarize page</span>
+                </button>
+                <button class="quick-chip text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center space-x-1.5 active:scale-95" data-prompt="Explain key takeaways">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    <span>Key takeaways</span>
+                </button>
+                <button class="quick-chip text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700/60 transition flex items-center space-x-1.5 active:scale-95" data-prompt="Translate to Hindi">
+                    <i class="fa-solid fa-language text-purple-400"></i>
+                    <span>Translate page</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat messages will be dynamically injected here -->
+        <div id="messageList" class="space-y-4 pb-2"></div>
+    </main>
+
+    <!-- Sticky Input Bar -->
+    <footer class="bg-cardBg/90 backdrop-blur-md border-t border-cardBorder px-4 py-3 shrink-0 z-20">
+        <form id="chatForm" class="flex items-center gap-2 max-w-4xl mx-auto">
+            <div class="relative flex items-center justify-center">
+                <button type="button" id="attachmentBtn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700/50 transition active:scale-95 shrink-0" title="Attach context">
+                    <i class="fa-solid fa-paperclip text-sm"></i>
+                </button>
+            </div>
+            
+            <div class="relative flex-1">
+                <input type="text" id="userInput" placeholder="Ask Sahayak or type a command..." class="w-full bg-slate-900/90 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-inner">
+            </div>
+
+            <button type="submit" id="sendBtn" class="w-11 h-10 flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/30 transition active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-paper-plane text-sm"></i>
+            </button>
+        </form>
+        <div class="text-center mt-2">
+            <span class="text-[10px] text-slate-500 tracking-wide">SAHAYAK AI • Secure Backend & Gemini Connected</span>
+        </div>
+    </footer>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="settingsModalContent">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
+                        <i class="fa-solid fa-gear text-sm"></i>
+                    </div>
+                    <h3 class="font-semibold text-base text-slate-100">Assistant Settings</h3>
+                </div>
+                <button id="closeSettings" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
+                <!-- Theme Preference -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Appearance</label>
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-moon text-cyan-400"></i>
+                            <div>
+                                <p class="text-sm font-medium text-slate-200">OLED Dark Theme</p>
+                                <p class="text-xs text-slate-400">Deep dark optimized for mobile screens</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded border border-emerald-500/20">Active</span>
+                    </div>
+                </div>
+
+                <!-- Model Selection -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Engine</label>
+                    <select id="modelSelect" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Secure Backend)</option>
+                    </select>
+                </div>
+
+                <!-- Preferences Toggles -->
+                <div class="space-y-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Assistant Behavior</label>
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Auto-summarize new tabs</p>
+                            <p class="text-xs text-slate-400">Generate quick brief upon page load</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="autoSumToggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- About section -->
+                <div class="pt-3 border-t border-slate-800 text-center">
+                    <p class="text-xs text-slate-400">SAHAYAK Assistant v2.0 - Gemini Connected</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Designed for Android & Secure Backend</p>
+                </div>
+            </div>
+            <div class="px-5 py-3 bg-slate-900/80 border-t border-slate-800 flex justify-end">
+                <button id="saveSettings" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-blue-600/20">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic (Connected to Backend) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatForm = document.getElementById('chatForm');
+            const userInput = document.getElementById('userInput');
+            const messageList = document.getElementById('messageList');
+            const chatContainer = document.getElementById('chatContainer');
+            const attachmentBtn = document.getElementById('attachmentBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            // Modal elements
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const settingsModalContent = document.getElementById('settingsModalContent');
+            const closeSettings = document.getElementById('closeSettings');
+            const saveSettings = document.getElementById('saveSettings');
+            const quickHelpBtn = document.getElementById('quickHelpBtn');
+
+            const chatHistory = [];
+
+            const initialGreeting = "Namaste! I am **Sahayak**, your browser assistant powered by Gemini. Ask me anything in English, Hindi, or Hinglish!";
+            addMessage(initialGreeting, 'assistant', true);
+            chatHistory.push({ sender: 'assistant', text: initialGreeting });
+
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = userInput.value.trim();
+                if (!text) return;
+
+                addMessage(text, 'user');
+                chatHistory.push({ sender: 'user', text: text });
+                userInput.value = '';
+
+                callGeminiBackend(text);
+            });
+
+            document.querySelectorAll('.quick-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const prompt = chip.getAttribute('data-prompt');
+                    if (!prompt) return;
+                    addMessage(prompt, 'user');
+                    chatHistory.push({ sender: 'user', text: prompt });
+                    callGeminiBackend(prompt);
+                });
+            });
+
+            quickHelpBtn.addEventListener('click', () => {
+                const helpText = "Here are quick commands you can try:\n1. **Summarize page** - Get key points.\n2. **Translate to Hindi** - Convert text.\n3. **Hinglish mein baat karein** - Chat naturally!";
+                addMessage(helpText, 'assistant', true);
+                chatHistory.push({ sender: 'assistant', text: helpText });
+            });
+
+            attachmentBtn.addEventListener('click', () => {
+                const attachMsg = "📎 [Context attached: Active Webpage DOM & Metadata]";
+                addMessage(attachMsg, 'user');
+                chatHistory.push({ sender: 'user', text: attachMsg });
+                callGeminiBackend("Analyze the attached webpage DOM and metadata context.");
+            });
+
+            settingsBtn.addEventListener('click', () => {
+                settingsModal.classList.remove('hidden');
+                setTimeout(() => {
+                    settingsModal.classList.remove('opacity-0');
+                    settingsModalContent.classList.remove('scale-95');
+                    settingsModalContent.classList.add('scale-100');
+                }, 10);
+            });
+
+            const closeModalFunc = () => {
+                settingsModal.classList.add('opacity-0');
+                settingsModalContent.classList.remove('scale-100');
+                settingsModalContent.classList.add('scale-95');
+                setTimeout(() => {
+                    settingsModal.classList.add('hidden');
+                }, 300);
+            };
+
+            closeSettings.addEventListener('click', closeModalFunc);
+            saveSettings.addEventListener('click', closeModalFunc);
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) closeModalFunc();
+            });
+
+            function addMessage(text, sender, isMarkdownFormatted = false) {
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'} mb-3`;
+
+                const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                let formattedText = escapeHtml(text);
+                formattedText = formattedText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                    .replace(/• /g, '<br>• ')
+                    .replace(/\n/g, '<br>');
+
+                if (sender === 'user') {
+                    messageWrapper.innerHTML = `
+                        <div class="max-w-[82%] sm:max-w-[70%] bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-none px-4 py-3 shadow-md text-sm leading-relaxed">
+                            <p>${formattedText}</p>
+                            <span class="block text-[10px] text-blue-200 text-right mt-1">${timeString}</span>
+                        </div>
+                    `;
+                } else {
+                    messageWrapper.innerHTML = `
+                        <div class="flex items-start space-x-2.5 max-w-[88%] sm:max-w-[75%]">
+                            <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white text-xs shrink-0 shadow-md mt-0.5">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="bg-cardBg border border-cardBorder rounded-2xl rounded-tl-none px-4 py-3 shadow-lg text-sm text-slate-200 leading-relaxed">
+                                <p>${formattedText}</p>
+                                <span class="block text-[10px] text-slate-500 mt-1">${timeString}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                messageList.appendChild(messageWrapper);
+                scrollToBottom();
+            }
+
+            async function callGeminiBackend(userQuery) {
+                userInput.disabled = true;
+                sendBtn.disabled = true;
+
+                const typingId = 'typing-' + Date.now();
+                const typingWrapper = document.createElement('div');
+                typingWrapper.id = typingId;
+                typingWrapper.className = 'flex w-full justify-start mb-3';
+                typingWrapper.innerHTML = `
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white text-xs shrink-0 shadow-md">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-cardBg border border-cardBorder rounded-2xl rounded-tl-none px-4 py-3 shadow-lg flex items-center space-x-1.5">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                            <span class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                            <span class="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                        </div>
+                    </div>
+                `;
+                messageList.appendChild(typingWrapper);
+                scrollToBottom();
+
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: userQuery,
+                            history: chatHistory.slice(-10)
+                        })
+                    });
+
+                    const data = await response.json();
+                    const typingElement = document.getElementById(typingId);
+                    if (typingElement) typingElement.remove();
+
+                    if (response.ok && data.reply) {
+                        addMessage(data.reply, 'assistant', true);
+                        chatHistory.push({ sender: 'assistant', text: data.reply });
+                    } else {
+                        throw new Error(data.error || 'Server error occurred.');
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    const typingElement = document.getElementById(typingId);
+                    if (typingElement) typingElement.remove();
+
+                    addMessage("⚠️ **Connection Error:** Could not reach the backend server.", 'assistant', true);
+                } finally {
+                    userInput.disabled = false;
+                    sendBtn.disabled = false;
+                    userInput.focus();
+                }
+            }
+
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            function escapeHtml(text) {
+                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+        });
+    </script>
+</body>
+</html>
