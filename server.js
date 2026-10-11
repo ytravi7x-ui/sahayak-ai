@@ -14,10 +14,10 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files (index.html)
+// Static HTML frontend files serve karne ke liye
 app.use(express.static(__dirname));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const SYSTEM_INSTRUCTION = `You are Sahayak, an intelligent and helpful AI browser assistant. You can communicate fluently in English, Hindi, and Hinglish based on the user's preference or prompt language. Your goal is to help users summarize webpages, explain key takeaways, translate text, and answer browsing queries accurately and politely.`;
 
@@ -32,8 +32,9 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
+        // Correct Gemini model configuration
         const model = genAI.getGenerativeModel({ 
-            model: 'gemini-1.5-flash',
+            model: 'gemini-pro',
             systemInstruction: SYSTEM_INSTRUCTION
         });
 
@@ -56,7 +57,7 @@ app.post('/api/chat', async (req, res) => {
 
     } catch (error) {
         console.error('Gemini API Error:', error);
-        res.status(500).json({ error: 'Failed to communicate with Gemini API.' });
+        res.status(500).json({ error: 'Failed to communicate with Gemini API: ' + error.message });
     }
 });
 
@@ -64,3 +65,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Sahayak backend running on port ${PORT}`);
 });
+         
